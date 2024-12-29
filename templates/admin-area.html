@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Área do Administrador - GED</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f9;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .header {
+            background-color: #ffffff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo {
+            height: 40px;
+            margin-right: 20px;
+        }
+        .container {
+            max-width: 1600px;
+            margin: 40px auto;
+            padding: 20px;
+            flex-grow: 1;
+        }
+        .footer {
+            background-color: rgba(0, 0, 0, 0.1);
+            padding: 10px 20px;
+            text-align: center;
+            font-size: 14px;
+            color: #333;
+        }
+        .admin-section {
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 20px;
+            height: 100%;
+        }
+        .admin-section h3 {
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .status-starting {
+            background-color: #e3f2fd;
+            color: #1976d2;
+        }
+        .status-in-progress {
+            background-color: #fff3e0;
+            color: #e65100;
+        }
+        .status-on-hold {
+            background-color: #fce4ec;
+            color: #c2185b;
+        }
+        .status-completed {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+        .status-cancelled {
+            background-color: #f5f5f5;
+            color: #616161;
+        }
+        .required-field::after {
+            content: "*";
+            color: red;
+            margin-left: 4px;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <a href="{{ url_for('home') }}">
+    <img src="/static/logo.png" alt="Logo da Empresa" class="logo">
+</a>
+        <h2>Área do Administrador</h2>
+    </header>
+
+    <div class="container">
+        <div class="row">
+            <!-- Users Section -->
+            <div class="col-md-6 mb-4">
+                <div class="admin-section">
+                    <h3>Gestão de Usuários</h3>
+                    <button type="button" class="btn btn-primary mb-4" onclick="showAddUserModal()">
+                        Adicionar Usuário
+                    </button>
+
+                    <div class="table-responsive">
+                        <table id="usersTable" class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Usuário</th>
+                                    <th>Função</th>
+                                    <th>Status da Senha</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in users %}
+                                <tr>
+                                    <td>{{ user.Username }}</td>
+                                    <td>{{ roles[user.Role] }}</td>
+                                    <td>
+                                        <span class="status-badge {% if user.Password %}status-completed{% else %}status-starting{% endif %}">
+                                            {% if user.Password %}
+                                                Senha Definida
+                                            {% else %}
+                                                Aguardando Definição
+                                            {% endif %}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Projects Section -->
+            <div class="col-md-6 mb-4">
+                <div class="admin-section">
+                    <h3>Gestão de Projetos</h3>
+                    <button type="button" class="btn btn-primary mb-4" onclick="showAddProjectModal()">
+                        Adicionar Projeto
+                    </button>
+
+                    <div class="table-responsive">
+                        <table id="projectsTable" class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Código</th>
+                                    <th>Nome</th>
+                                    <th>Cliente</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for project in projects %}
+                                <tr>
+                                    <td>{{ project.ProjectCode }}</td>
+                                    <td>{{ project.ProjectName }}</td>
+                                    <td>{{ project.ClientName }}</td>
+                                    <td>
+                                        <span class="status-badge status-{{ project.ProjectStatus.lower() }}">
+                                            {{ project_statuses[project.ProjectStatus] }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn btn-warning btn-sm" 
+                                                onclick="showEditProjectModal('{{ project.Id }}')">
+                                            ✏️
+                                        </button>
+                                        <button type="button" class="btn btn-danger btn-sm"
+                                                onclick="confirmDeleteProject('{{ project.Id }}')">
+                                            🗑️
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add User Modal -->
+    <div class="modal fade" id="addUserModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Adicionar Novo Usuário</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="POST" action="{{ url_for('add_user') }}">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="username" class="form-label required-field">Nome de Usuário:</label>
+                            <input type="text" class="form-control" id="username" name="username" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="role" class="form-label required-field">Função:</label>
+                            <select class="form-select" id="role" name="role" required>
+                                <option value="">Selecione uma função...</option>
+                                {% for role_id, role_name in roles.items() %}
+                                    <option value="{{ role_id }}">{{ role_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Adicionar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="projectModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="projectModalTitle">Adicionar Projeto</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="projectForm" method="POST" action="{{ url_for('add_project') }}">
+                    <div class="modal-body">
+                        <input type="hidden" id="projectId" name="projectId">
+                        <div class="mb-3">
+                            <label for="projectCode" class="form-label required-field">Código do Projeto:</label>
+                            <input type="text" class="form-control" id="projectCode" name="projectCode" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="projectName" class="form-label required-field">Nome do Projeto:</label>
+                            <input type="text" class="form-control" id="projectName" name="projectName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="clientName" class="form-label required-field">Nome do Cliente:</label>
+                            <input type="text" class="form-control" id="clientName" name="clientName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="startDate" class="form-label required-field">Data de Início:</label>
+                            <input type="date" class="form-control" id="startDate" name="startDate" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="endDate" class="form-label">Data de Término:</label>
+                            <input type="date" class="form-control" id="endDate" name="endDate">
+                        </div>
+                        <div class="mb-3">
+                            <label for="projectStatus" class="form-label required-field">Status:</label>
+                            <select class="form-select" id="projectStatus" name="projectStatus" required>
+                                <option value="">Selecione um status...</option>
+                                {% for status_id, status_name in project_statuses.items() %}
+                                    <option value="{{ status_id }}">{{ status_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Salvar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="deleteProjectModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirmar Exclusão</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Tem certeza que deseja excluir este projeto?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <form id="deleteProjectForm" method="POST" style="display: inline;">
+                        <button type="submit" class="btn btn-danger">Excluir</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        PFC - Guilherme Avelar - Engenharia de Controle e Automação - UFMG
+    </footer>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+    <script>
+        let userModal;
+        let projectModal;
+        let deleteProjectModal;
+        
+        $(document).ready(function() {
+            userModal = new bootstrap.Modal(document.getElementById('addUserModal'));
+            projectModal = new bootstrap.Modal(document.getElementById('projectModal'));
+            deleteProjectModal = new bootstrap.Modal(document.getElementById('deleteProjectModal'));
+
+            $('#usersTable').DataTable({
+                language: {
+                    url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/pt-BR.json'
+                }
+            });
+
+            $('#projectsTable').DataTable({
+                language: {
+                    url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/pt-BR.json'
+                }
+            });
+        });
+
+        function showAddUserModal() {
+            userModal.show();
+        }
+
+        function showAddProjectModal() {
+            document.getElementById('projectModalTitle').textContent = 'Adicionar Projeto';
+            document.getElementById('projectForm').action = "{{ url_for('add_project') }}";
+            document.getElementById('projectId').value = '';
+            document.getElementById('projectForm').reset();
+            projectModal.show();
+        }
+
+        function showEditProjectModal(projectId) {
+            document.getElementById('projectModalTitle').textContent = 'Editar Projeto';
+            document.getElementById('projectForm').action = "/edit-project/" + projectId;
+            
+            fetch('/get-project/' + projectId)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('projectId').value = data.Id;
+                    document.getElementById('projectCode').value = data.ProjectCode;
+                    document.getElementById('projectName').value = data.ProjectName;
+                    document.getElementById('clientName').value = data.ClientName;
+                    document.getElementById('startDate').value = data.StartDate;
+                    document.getElementById('endDate').value = data.EndDate || '';
+                    document.getElementById('projectStatus').value = data.ProjectStatus;
+                    projectModal.show();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Erro ao carregar dados do projeto');
+                });
+        }
+
+        function confirmDeleteProject(projectId) {
+            document.getElementById('deleteProjectForm').action = "/delete-project/" + projectId;
+            deleteProjectModal.show();
+        }
+    </script>
+</body>
+</html>

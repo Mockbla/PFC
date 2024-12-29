@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GED</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f9;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .header {
+            background-color: #ffffff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .logo {
+            height: 40px;
+            margin-right: 20px;
+        }
+        .project-select {
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            font-size: 14px;
+            flex-grow: 1;
+            max-width: 300px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 20px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2em;
+        }
+        .button-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 0 20px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .button {
+            padding: 15px 10px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #0056b3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            transition: background-color 0.3s, transform 0.1s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .button:hover {
+            background-color: #003d82;
+            transform: translateY(-2px);
+        }
+        .button:active {
+            transform: translateY(0);
+        }
+        .footer {
+            background-color: rgba(0, 0, 0, 0.1);
+            padding: 10px 20px;
+            text-align: center;
+            font-size: 14px;
+            color: #333;
+        }
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .logo {
+                margin: 0 auto 10px;
+            }
+            .project-select {
+                max-width: none;
+            }
+            h1 {
+                font-size: 1.5em;
+            }
+            .button {
+                min-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <a href="{{ url_for('home') }}">
+    <img src="/static/logo.png" alt="Logo da Empresa" class="logo">
+</a>
+        <div>Sistema de Gestão Documental</div>
+    </header>
+
+    <div class="container">
+        <h1>Selecione a opção desejada</h1>
+        <div class="button-container">
+            <button class="button" onclick="location.href='/ld'">Lista de Documentos</button>
+            <button class="button" onclick="location.href='/post-document'">Postar Documento</button>
+            <button class="button" onclick="location.href='/my-posts'">Minhas Postagens</button>
+            <button class="button" onclick="location.href='/approvals'">Fluxo de Aprovações</button>
+            <button class="button" onclick="location.href='/all-issues'">Todas as Emissões</button>
+            {% if user.role == 'archive' %}
+                <button class="button" onclick="location.href='/archive-area'">Área do Arquivo</button>
+            {% elif user.role == 'manager' %}
+                <button class="button" onclick="location.href='/manager-area'">Área do Gerente</button>
+            {% elif user.role == 'admin' %}
+                <button class="button" onclick="location.href='/admin-area'">Área do Administrador</button>
+            {% endif %}
+        </div>
+    </div>
+
+    <footer class="footer">
+        PFC - Guilherme Avelar - Engenharia de Controle e Automação - UFMG
+    </footer>
+</body>
+</html>

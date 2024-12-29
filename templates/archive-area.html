@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Área do Arquivo - GED</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f9;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .header {
+            background-color: #ffffff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo {
+            height: 40px;
+            margin-right: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            flex-grow: 1;
+        }
+        .footer {
+            background-color: rgba(0, 0, 0, 0.1);
+            padding: 10px 20px;
+            text-align: center;
+            font-size: 14px;
+            color: #333;
+        }
+        .nav-tabs {
+            margin-bottom: 20px;
+        }
+        .modal-dialog {
+            max-width: 500px;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <a href="{{ url_for('home') }}">
+    <img src="/static/logo.png" alt="Logo da Empresa" class="logo">
+</a>
+        <h2>Área do Arquivo</h2>
+    </header>
+
+    <div class="container">
+        <!-- Tabs -->
+        <ul class="nav nav-tabs" id="archiveTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="transmittal-tab" data-bs-toggle="tab" 
+                        data-bs-target="#transmittal" type="button" role="tab">
+                    Confirmar Transmittal
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="return-tab" data-bs-toggle="tab" 
+                        data-bs-target="#return" type="button" role="tab">
+                    Confirmar Retorno
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="archiveTabsContent">
+            <div class="tab-pane fade show active" id="transmittal" role="tabpanel">
+                <div class="table-responsive">
+                    <table id="transmittalTable" class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Projeto</th>
+                                <th>Documento</th>
+                                <th>Revisão</th>
+                                <th>Título</th>
+                                <th>Postado por</th>
+                                <th>Data de Emissão</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for doc in pending_transmittal %}
+                            <tr>
+                                <td>{{ doc.ProjectCode }}</td>
+                                <td>{{ doc.DocumentCode }}</td>
+                                <td>{{ doc.rev }}</td>
+                                <td>{{ doc.title }}</td>
+                                <td>{{ doc.postedBy }}</td>
+                                <td>{{ doc.issuedTimestamp.strftime('%d/%m/%Y %H:%M') }}</td>
+                                <td>
+                                    <button class="btn btn-primary btn-sm" 
+                                            onclick="showTransmittalModal('{{ doc.issueId }}', '{{ doc.ProjectCode }}')">
+                                        Confirmar Transmittal
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="return" role="tabpanel">
+                <div class="table-responsive">
+                    <table id="returnTable" class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Projeto</th>
+                                <th>Documento</th>
+                                <th>Revisão</th>
+                                <th>Título</th>
+                                <th>Transmittal</th>
+                                <th>Data do Transmittal</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for doc in pending_return %}
+                            <tr>
+                                <td>{{ doc.ProjectCode }}</td>
+                                <td>{{ doc.DocumentCode }}</td>
+                                <td>{{ doc.rev }}</td>
+                                <td>{{ doc.title }}</td>
+                                <td>{{ doc.TransmittalCode }}</td>
+                                <td>{{ doc.TransmittalTimestamp.strftime('%d/%m/%Y %H:%M') }}</td>
+                                <td>
+                                    <button class="btn btn-primary btn-sm" 
+                                            onclick="showReturnModal('{{ doc.issueId }}', '{{ doc.ProjectCode }}')">
+                                        Confirmar Retorno
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="transmittalModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirmar Transmittal</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="POST" action="{{ url_for('confirm_transmittal') }}">
+                    <div class="modal-body">
+                        <input type="hidden" id="transmittalIssueId" name="issueId">
+                        <input type="hidden" id="transmittalProjectCode" name="projectCode">
+                        <p>Confirmar envio do transmittal para o cliente?</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Confirmar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="returnModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirmar Retorno</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="POST" action="{{ url_for('confirm_return') }}">
+                    <div class="modal-body">
+                        <input type="hidden" id="returnIssueId" name="issueId">
+                        <input type="hidden" id="returnProjectCode" name="projectCode">
+                        <p>Confirmar recebimento do retorno do cliente?</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Confirmar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        PFC - Guilherme Avelar - Engenharia de Controle e Automação - UFMG
+    </footer>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+    <script>
+        let transmittalModal;
+        let returnModal;
+
+        $(document).ready(function() {
+            transmittalModal = new bootstrap.Modal(document.getElementById('transmittalModal'));
+            returnModal = new bootstrap.Modal(document.getElementById('returnModal'));
+
+            $('#transmittalTable').DataTable({
+                language: {
+                    url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/pt-BR.json'
+                }
+            });
+
+            $('#returnTable').DataTable({
+                language: {
+                    url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/pt-BR.json'
+                }
+            });
+        });
+
+        function showTransmittalModal(issueId, projectCode) {
+            document.getElementById('transmittalIssueId').value = issueId;
+            document.getElementById('transmittalProjectCode').value = projectCode;
+            transmittalModal.show();
+        }
+
+        function showReturnModal(issueId, projectCode) {
+            document.getElementById('returnIssueId').value = issueId;
+            document.getElementById('returnProjectCode').value = projectCode;
+            returnModal.show();
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Documentos - GED</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f9;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .header {
+            background-color: #ffffff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .logo {
+            height: 40px;
+            margin-right: 20px;
+        }
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-grow: 1;
+            max-width: 600px;
+        }
+        .project-select {
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            font-size: 14px;
+            flex-grow: 1;
+        }
+        .submit-button {
+            padding: 8px 15px;
+            font-size: 14px;
+            cursor: pointer;
+            background-color: #0056b3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            transition: background-color 0.3s, transform 0.1s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            white-space: nowrap;
+        }
+        .submit-button:hover {
+            background-color: #003d82;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            flex-grow: 1;
+        }
+        .footer {
+            background-color: rgba(0, 0, 0, 0.1);
+            padding: 10px 20px;
+            text-align: center;
+            font-size: 14px;
+            color: #333;
+            margin-top: auto;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+            justify-content: flex-start;
+        }
+        .btn-icon {
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <a href="{{ url_for('home') }}">
+    <img src="/static/logo.png" alt="Logo da Empresa" class="logo">
+</a>
+        <div class="header-controls">
+            <form method="POST" action="/ld-selected" class="d-flex gap-2 flex-grow-1">
+                <select class="project-select" id="dropdown" name="dropdown">
+                    {% for item in dropdown_itens %}
+                        <option value="{{ item }}">{{ item }}</option>
+                    {% endfor %}
+                </select>
+                <button class="submit-button" type="submit">Buscar</button>
+            </form>
+            {% if user_role == 'planning' %}
+            <button type="button" class="submit-button" onclick="showAddModal()">Adicionar</button>
+            {% endif %}
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="card">
+            <div class="card-body">
+                <table id="dataTable" class="table table-striped table-bordered" style="width:100%">
+                    <thead>
+                        <tr>
+                            {% for column in columns %}
+                            <th>{{ column }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if data %}
+                            {% for row in data %}
+                                <tr>
+                                    {% if user_role == 'planning' %}
+                                        <td>{{ row[0] }}</td>
+                                        <td>{{ row[1] }}</td>
+                                        <td>{{ row[2] }}</td>
+                                        <td>
+                                            <div class="action-buttons">
+                                                {% if row[3]['can_modify'] %}
+                                                    <button type="button" class="btn btn-warning btn-sm btn-icon" 
+                                                            onclick="showEditModal('{{ row[3]['id'] }}')">
+                                                        ✏️
+                                                    </button>
+                                                    <button type="button" class="btn btn-danger btn-sm btn-icon"
+                                                            onclick="confirmDelete('{{ row[3]['id'] }}')">
+                                                        🗑️
+                                                    </button>
+                                                {% else %}
+                                                    <span class="text-muted">Não editável</span>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    {% else %}
+                                        <td>{{ row[0] }}</td>
+                                        <td>{{ row[1] }}</td>
+                                        <td>{{ row[2] }}</td>
+                                    {% endif %}
+                                </tr>
+                            {% endfor %}
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    {% if user_role == 'planning' %}
+    <div class="modal fade" id="documentModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle">Adicionar Documento</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="documentForm" method="POST" action="/add-document">
+                    <div class="modal-body">
+                        <input type="hidden" id="documentId" name="documentId">
+                        <div class="mb-3">
+                            <label for="projectCode" class="form-label">Projeto:</label>
+                            <input type="text" class="form-control" id="projectCode" name="projectCode" 
+                                   readonly required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="documentCode" class="form-label">Código do Documento:</label>
+                            <input type="text" class="form-control" id="documentCode" name="documentCode" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="dueDate" class="form-label">Data de Entrega:</label>
+                            <input type="date" class="form-control" id="dueDate" name="dueDate" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Salvar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="deleteModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirmar Exclusão</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Tem certeza que deseja excluir este documento?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <form id="deleteForm" method="POST" style="display: inline;">
+                        <button type="submit" class="btn btn-danger">Excluir</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <footer class="footer">
+        PFC - Guilherme Avelar - Engenharia de Controle e Automação - UFMG
+    </footer>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+    <script>
+        let documentModal;
+        let deleteModal;
+        
+        $(document).ready(function() {
+            $('#dataTable').DataTable({
+                language: {
+                    url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/pt-BR.json'
+                }
+            });
+            
+            documentModal = new bootstrap.Modal(document.getElementById('documentModal'));
+            deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+
+            {% if selected_project %}
+                $('#dropdown').val('{{ selected_project }}');
+            {% endif %}
+        });
+
+        function showAddModal() {
+            document.getElementById('modalTitle').textContent = 'Adicionar Documento';
+            document.getElementById('documentForm').action = '/add-document';
+            document.getElementById('documentId').value = '';
+            document.getElementById('projectCode').value = document.getElementById('dropdown').value;
+            document.getElementById('documentCode').value = '';
+            document.getElementById('dueDate').value = '';
+            documentModal.show();
+        }
+
+        function showEditModal(docId) {
+            document.getElementById('modalTitle').textContent = 'Editar Documento';
+            document.getElementById('documentForm').action = '/edit-document/' + docId;
+            document.getElementById('projectCode').value = document.getElementById('dropdown').value;
+            
+            fetch('/get-document/' + docId)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('documentCode').value = data.documentCode;
+                    document.getElementById('dueDate').value = data.dueDate;
+                    documentModal.show();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Erro ao carregar dados do documento');
+                });
+        }
+
+        function confirmDelete(docId) {
+            document.getElementById('deleteForm').action = '/delete-document/' + docId;
+            deleteModal.show();
+        }
+    </script>
+</body>
+</html>

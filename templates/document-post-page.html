@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Postar Documento - GED</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f9;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .header {
+            background-color: #ffffff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo {
+            height: 40px;
+            margin-right: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .footer {
+            background-color: rgba(0, 0, 0, 0.1);
+            padding: 10px 20px;
+            text-align: center;
+            font-size: 14px;
+            color: #333;
+            margin-top: auto;
+        }
+        textarea.form-control {
+            min-height: 100px;
+        }
+        .checklist-item {
+            margin-bottom: 15px;
+            padding: 10px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+        }
+        .checklist-item:hover {
+            background-color: #f8f9fa;
+        }
+        .radio-buttons {
+            display: flex;
+            justify-content: flex-start;
+            gap: 50px;
+            margin-top: 10px;
+        }
+        .radio-option {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <a href="{{ url_for('home') }}">
+    <img src="/static/logo.png" alt="Logo da Empresa" class="logo">
+</a>
+        <h2>Postar Novo Documento</h2>
+    </header>
+
+    <div class="container">
+        <form id="postForm" method="POST" action="/post-document" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="projectCode">Projeto:</label>
+                <select class="form-control" id="projectCode" name="projectCode" required>
+                    <option value="">Selecione o projeto...</option>
+                    {% for project in projects %}
+                        <option value="{{ project.ProjectCode }}">{{ project.ProjectCode }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="documentCode">Código do documento:</label>
+                <select class="form-control" id="documentCode" name="documentCode" required disabled>
+                    <option value="">Selecione o projeto primeiro...</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="title">Título:</label>
+                <textarea class="form-control" id="title" name="title" rows="3" required></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="rev">Revisão:</label>
+                <input type="text" class="form-control" id="rev" name="rev" required>
+            </div>
+
+            <div class="form-group">
+                <label for="filename">Arquivo:</label>
+                <input type="file" class="form-control" id="filename" name="filename" required>
+            </div>
+
+            <div class="form-group">
+                <button type="button" class="btn btn-primary mb-3" onclick="openChecklist()">
+                    Verificar Conformidade com Normas
+                </button>
+                <div id="checklistStatus" class="alert alert-warning">
+                    Por favor, complete a verificação de conformidade antes de postar o documento.
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" id="submitButton" disabled>Postar Documento</button>
+        </form>
+    </div>
+
+    <!-- Checklist Modal -->
+    <div class="modal fade" id="checklistModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Lista de Verificação de Conformidade</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="checklistForm">
+                        <div class="checklist-item">
+                            <div>1. O documento está no template padrão da empresa?</div>
+                            <div class="radio-buttons">
+                                <div class="radio-option">
+                                    <input type="radio" id="check1-sim" name="check1" value="sim" class="form-check-input" required>
+                                    <label class="form-check-label" for="check1-sim">Sim</label>
+                                </div>
+                                <div class="radio-option">
+                                    <input type="radio" id="check1-nao" name="check1" value="nao" class="form-check-input" required>
+                                    <label class="form-check-label" for="check1-nao">Não</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="checklist-item">
+                            <div>2. Todas as revisões anteriores estão listadas no histórico?</div>
+                            <div class="radio-buttons">
+                                <div class="radio-option">
+                                    <input type="radio" id="check2-sim" name="check2" value="sim" class="form-check-input" required>
+                                    <label class="form-check-label" for="check2-sim">Sim</label>
+                                </div>
+                                <div class="radio-option">
+                                    <input type="radio" id="check2-nao" name="check2" value="nao" class="form-check-input" required>
+                                    <label class="form-check-label" for="check2-nao">Não</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="checklist-item">
+                            <div>3. As referências técnicas estão devidamente citadas?</div>
+                            <div class="radio-buttons">
+                                <div class="radio-option">
+                                    <input type="radio" id="check3-sim" name="check3" value="sim" class="form-check-input" required>
+                                    <label class="form-check-label" for="check3-sim">Sim</label>
+                                </div>
+                                <div class="radio-option">
+                                    <input type="radio" id="check3-nao" name="check3" value="nao" class="form-check-input" required>
+                                    <label class="form-check-label" for="check3-nao">Não</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="checklist-item">
+                            <div>4. Os cálculos foram verificados e validados?</div>
+                            <div class="radio-buttons">
+                                <div class="radio-option">
+                                    <input type="radio" id="check4-sim" name="check4" value="sim" class="form-check-input" required>
+                                    <label class="form-check-label" for="check4-sim">Sim</label>
+                                </div>
+                                <div class="radio-option">
+                                    <input type="radio" id="check4-nao" name="check4" value="nao" class="form-check-input" required>
+                                    <label class="form-check-label" for="check4-nao">Não</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="checklist-item">
+                            <div>5. As unidades de medida estão consistentes em todo o documento?</div>
+                            <div class="radio-buttons">
+                                <div class="radio-option">
+                                    <input type="radio" id="check5-sim" name="check5" value="sim" class="form-check-input" required>
+                                    <label class="form-check-label" for="check5-sim">Sim</label>
+                                </div>
+                                <div class="radio-option">
+                                    <input type="radio" id="check5-nao" name="check5" value="nao" class="form-check-input" required>
+                                    <label class="form-check-label" for="check5-nao">Não</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="checklist-item">
+                            <div>6. Todas as tabelas e figuras estão numeradas e referenciadas?</div>
+                            <div class="radio-buttons">
+                                <div class="radio-option">
+                                    <input type="radio" id="check6-sim" name="check6" value="sim" class="form-check-input" required>
+                                    <label class="form-check-label" for="check6-sim">Sim</label>
+                                </div>
+                                <div class="radio-option">
+                                    <input type="radio" id="check6-nao" name="check6" value="nao" class="form-check-input" required>
+                                    <label class="form-check-label" for="check6-nao">Não</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="checklist-item">
+                            <div>7. A formatação segue o padrão estabelecido nas normas?</div>
+                            <div class="radio-buttons">
+                                <div class="radio-option">
+                                    <input type="radio" id="check7-sim" name="check7" value="sim" class="form-check-input" required>
+                                    <label class="form-check-label" for="check7-sim">Sim</label>
+                                </div>
+                                <div class="radio-option">
+                                    <input type="radio" id="check7-nao" name="check7" value="nao" class="form-check-input" required>
+                                    <label class="form-check-label" for="check7-nao">Não</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="checklist-item">
+                            <div>8. A nomenclatura técnica está em conformidade com as normas?</div>
+                            <div class="radio-buttons">
+                                <div class="radio-option">
+                                    <input type="radio" id="check8-sim" name="check8" value="sim" class="form-check-input" required>
+                                    <label class="form-check-label" for="check8-sim">Sim</label>
+                                </div>
+                                <div class="radio-option">
+                                    <input type="radio" id="check8-nao" name="check8" value="nao" class="form-check-input" required>
+                                    <label class="form-check-label" for="check8-nao">Não</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="checklist-item">
+                            <div>9. O documento foi revisado quanto a erros ortográficos?</div>
+                            <div class="radio-buttons">
+                                <div class="radio-option">
+                                    <input type="radio" id="check9-sim" name="check9" value="sim" class="form-check-input" required>
+                                    <label class="form-check-label" for="check9-sim">Sim</label>
+                                </div>
+                                <div class="radio-option">
+                                    <input type="radio" id="check9-nao" name="check9" value="nao" class="form-check-input" required>
+                                    <label class="form-check-label" for="check9-nao">Não</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="checklist-item">
+                            <div>10. O documento está assinado pelos responsáveis?</div>
+                            <div class="radio-buttons">
+                                <div class="radio-option">
+                                    <input type="radio" id="check10-sim" name="check10" value="sim" class="form-check-input" required>
+                                    <label class="form-check-label" for="check10-sim">Sim</label>
+                                </div>
+                                <div class="radio-option">
+                                    <input type="radio" id="check10-nao" name="check10" value="nao" class="form-check-input" required>
+                                    <label class="form-check-label" for="check10-nao">Não</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                    <button type="button" class="btn btn-primary" onclick="validateChecklist()">Confirmar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        PFC - Guilherme Avelar - Engenharia de Controle e Automação - UFMG
+    </footer>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let checklistModal;
+        let checklistCompleted = false;
+
+        function openChecklist() {
+            checklistModal.show();
+        }
+
+        function updateSubmitButton() {
+            const submitButton = document.getElementById('submitButton');
+            const checklistStatus = document.getElementById('checklistStatus');
+            
+            if (checklistCompleted) {
+                submitButton.disabled = false;
+                checklistStatus.className = 'alert alert-success';
+                checklistStatus.textContent = 'Verificação de conformidade concluída com sucesso!';
+            } else {
+                submitButton.disabled = true;
+                checklistStatus.className = 'alert alert-warning';
+                checklistStatus.textContent = 'Por favor, complete a verificação de conformidade antes de postar o documento.';
+            }
+        }
+
+        function validateChecklist() {
+            const form = document.getElementById('checklistForm');
+            const radioGroups = Array.from({ length: 10 }, (_, i) => form.querySelectorAll(`input[name="check${i + 1}"]`));
+            
+            const allAnswered = radioGroups.every(group => Array.from(group).some(radio => radio.checked));
+            if (!allAnswered) {
+                alert('Por favor, responda todas as questões.');
+                return;
+            }
+
+            const allYes = radioGroups.every(group => {
+                const selectedValue = Array.from(group).find(radio => radio.checked)?.value;
+                return selectedValue === 'sim';
+            });
+
+            if (!allYes) {
+                alert('Todos os itens devem estar em conformidade para prosseguir com a postagem.');
+                return;
+            }
+
+            checklistCompleted = true;
+            updateSubmitButton();
+            checklistModal.hide();
+        }
+
+        $(document).ready(function() {
+            checklistModal = new bootstrap.Modal(document.getElementById('checklistModal'));
+            updateSubmitButton();
+
+            function updateDocumentCodes(projectCode) {
+                const documentCodeSelect = $('#documentCode');
+                
+                if (projectCode) {
+                    documentCodeSelect.html('<option value="">Carregando...</option>');
+                    documentCodeSelect.prop('disabled', true);
+                    
+                    $.ajax({
+                        url: '/get-document-codes',
+                        method: 'GET',
+                        data: { projectCode: projectCode },
+                        success: function(response) {
+                            documentCodeSelect.empty();
+                            documentCodeSelect.append('<option value="">Selecione o código do documento...</option>');
+                            
+                            if (response.documentCodes && response.documentCodes.length > 0) {
+                                response.documentCodes.forEach(function(code) {
+                                    documentCodeSelect.append(
+                                        $('<option></option>').val(code).text(code)
+                                    );
+                                });
+                                documentCodeSelect.prop('disabled', false);
+                            } else {
+                                documentCodeSelect.append('<option value="">Nenhum documento encontrado</option>');
+                                documentCodeSelect.prop('disabled', true);
+                            }
+                        },
+                        error: function() {
+                            documentCodeSelect.html('<option value="">Erro ao carregar documentos</option>');
+                            documentCodeSelect.prop('disabled', true);
+                        }
+                    });
+                } else {
+                    documentCodeSelect.html('<option value="">Selecione o projeto primeiro...</option>');
+                    documentCodeSelect.prop('disabled', true);
+                }
+            }
+
+            $('#projectCode').on('change', function() {
+                updateDocumentCodes($(this).val());
+            });
+
+            const initialProject = $('#projectCode').val();
+            if (initialProject) {
+                updateDocumentCodes(initialProject);
+            }
+
+            $('#postForm').on('submit', function(event) {
+                if (!checklistCompleted) {
+                    event.preventDefault();
+                    alert('Por favor, complete a verificação de conformidade antes de postar o documento.');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

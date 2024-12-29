@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - GED</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f9;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        .header {
+            background-color: #ffffff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 10px 20px;
+            text-align: center;
+        }
+        .logo {
+            height: 40px;
+        }
+        .container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .login-form {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 350px;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2em;
+        }
+        .form-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+        }
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        .password-toggle {
+            position: absolute;
+            right: 10px;
+            top: calc(50% + 10px);
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 24px;
+            width: 24px;
+            line-height: 1;
+        }
+        .button {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #0056b3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        .button:hover {
+            background-color: #003d82;
+        }
+        .setup-button {
+            background: none;
+            border: none;
+            color: #0056b3;
+            text-decoration: underline;
+            padding: 10px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+        .setup-button:hover {
+            color: #003d82;
+        }
+        .footer {
+            background-color: rgba(0, 0, 0, 0.1);
+            padding: 10px 20px;
+            text-align: center;
+            font-size: 14px;
+            color: #333;
+        }
+        .modal-content {
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .modal-header {
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #e0e0e0;
+            border-radius: 8px 8px 0 0;
+        }
+        .modal-footer {
+            background-color: #f8f9fa;
+            border-top: 1px solid #e0e0e0;
+            border-radius: 0 0 8px 8px;
+        }
+        .modal .form-control:focus {
+            border-color: #0056b3;
+            box-shadow: 0 0 0 0.2rem rgba(0,86,179,0.25);
+        }
+        .modal .btn-primary {
+            background-color: #0056b3;
+            border-color: #0056b3;
+        }
+        .modal .btn-primary:hover {
+            background-color: #003d82;
+            border-color: #003d82;
+        }
+        .password-feedback {
+            font-size: 12px;
+            margin-top: 5px;
+            color: #dc3545;
+            display: none;
+        }
+        .password-feedback.visible {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <a href="{{ url_for('home') }}">
+    <img src="/static/logo.png" alt="Logo da Empresa" class="logo">
+</a>
+    </header>
+
+    <div class="container">
+        <div class="login-form">
+            <h1>Login</h1>
+            <form method="POST">
+                <div class="form-group">
+                    <label for="username">Usuário:</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Senha:</label>
+                    <input type="password" id="password" name="password" required>
+                    <button type="button" class="password-toggle" id="togglePassword">👁️</button>
+                </div>
+                <button type="submit" class="button">Entrar</button>
+                <div class="text-center mt-3">
+                    <button type="button" class="setup-button" data-bs-toggle="modal" data-bs-target="#passwordSetupModal">
+                        Primeiro acesso? Defina sua senha
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Password Setup Modal -->
+    <div class="modal fade" id="passwordSetupModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Definir Senha</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="POST" action="{{ url_for('set_initial_password') }}" id="passwordSetupForm">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="setupUsername" class="form-label">Nome de Usuário:</label>
+                            <input type="text" class="form-control" id="setupUsername" name="username" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="setupPassword" class="form-label">Nova Senha:</label>
+                            <input type="password" class="form-control" id="setupPassword" name="password" required>
+                            <div class="password-feedback" id="passwordFeedback"></div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="confirmPassword" class="form-label">Confirmar Senha:</label>
+                            <input type="password" class="form-control" id="confirmPassword" required>
+                            <div class="password-feedback" id="confirmFeedback"></div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary" id="submitPassword" disabled>Definir Senha</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        PFC - Guilherme Avelar - Engenharia de Controle e Automação - UFMG
+    </footer>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+    <script>
+
+        const togglePassword = document.getElementById('togglePassword');
+        const password = document.getElementById('password');
+
+        togglePassword.addEventListener('mousedown', function() {
+            password.type = 'text';
+        });
+
+        togglePassword.addEventListener('mouseup', function() {
+            password.type = 'password';
+        });
+
+        togglePassword.addEventListener('mouseleave', function() {
+            password.type = 'password';
+        });
+
+        const setupPassword = document.getElementById('setupPassword');
+        const confirmPassword = document.getElementById('confirmPassword');
+        const submitButton = document.getElementById('submitPassword');
+        const passwordFeedback = document.getElementById('passwordFeedback');
+        const confirmFeedback = document.getElementById('confirmFeedback');
+
+        function validatePasswords() {
+            const password = setupPassword.value;
+            const confirm = confirmPassword.value;
+            let isValid = true;
+
+            passwordFeedback.textContent = '';
+            confirmFeedback.textContent = '';
+            passwordFeedback.classList.remove('visible');
+            confirmFeedback.classList.remove('visible');
+
+            if (password.length < 6) {
+                passwordFeedback.textContent = 'A senha deve ter pelo menos 6 caracteres';
+                passwordFeedback.classList.add('visible');
+                isValid = false;
+            }
+
+            if (password !== confirm && confirm.length > 0) {
+                confirmFeedback.textContent = 'As senhas não coincidem';
+                confirmFeedback.classList.add('visible');
+                isValid = false;
+            }
+
+            submitButton.disabled = !isValid || !password || !confirm;
+        }
+
+        setupPassword.addEventListener('input', validatePasswords);
+        confirmPassword.addEventListener('input', validatePasswords);
+    </script>
+</body>
+</html>

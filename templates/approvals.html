@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fluxo de Aprovações - GED</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f9;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .header {
+            background-color: #ffffff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo {
+            height: 40px;
+            margin-right: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            flex-grow: 1;
+        }
+        .footer {
+            background-color: rgba(0, 0, 0, 0.1);
+            padding: 10px 20px;
+            text-align: center;
+            font-size: 14px;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <a href="{{ url_for('home') }}">
+    <img src="/static/logo.png" alt="Logo da Empresa" class="logo">
+</a>
+        <h2>Fluxo de Aprovações</h2>
+    </header>
+
+    <div class="container">
+        {% if user_role in ['manager', 'archive'] %}
+            <div class="table-responsive">
+                <table id="approvalsTable" class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Projeto</th>
+                            <th>Documento</th>
+                            <th>Revisão</th>
+                            <th>Título</th>
+                            <th>Postado por</th>
+                            <th>Data da Postagem</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for post in posts %}
+                        <tr>
+                            <td>{{ post.ProjectCode }}</td>
+                            <td>{{ post.DocumentCode }}</td>
+                            <td>{{ post.rev }}</td>
+                            <td>{{ post.title }}</td>
+                            <td>{{ post.postedBy }}</td>
+                            <td>{{ post.postTimestamp.strftime('%d/%m/%Y %H:%M') }}</td>
+                            <td>
+                                <form method="POST" action="{{ url_for('approve_post') }}" style="display: inline;">
+                                    <input type="hidden" name="post_id" value="{{ post.id }}">
+                                    <input type="hidden" name="approval_type" value="{{ user_role }}">
+                                    <button type="submit" class="btn btn-success btn-sm">Aprovar</button>
+                                </form>
+                                <a href="{{ url_for('download_file', folder=post.folder, filename=post.filename) }}" 
+                                   class="btn btn-primary btn-sm">
+                                    Download
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="alert alert-warning">
+                Você não tem permissão para aprovar documentos.
+            </div>
+        {% endif %}
+    </div>
+
+    <footer class="footer">
+        PFC - Guilherme Avelar - Engenharia de Controle e Automação - UFMG
+    </footer>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('#approvalsTable').DataTable({
+                order: [[5, 'desc']],
+                language: {
+                    url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/pt-BR.json'
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Área do Gerente - GED</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f9;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .header {
+            background-color: #ffffff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo {
+            height: 40px;
+            margin-right: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            flex-grow: 1;
+        }
+        .footer {
+            background-color: rgba(0, 0, 0, 0.1);
+            padding: 10px 20px;
+            text-align: center;
+            font-size: 14px;
+            color: #333;
+        }
+        .project-card {
+            margin-bottom: 30px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .project-header {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .project-body {
+            padding: 20px;
+        }
+        .team-member {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .team-member:last-child {
+            border-bottom: none;
+        }
+        .member-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .role-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .role-manager {
+            background-color: #e3f2fd;
+            color: #1976d2;
+        }
+        .role-archive {
+            background-color: #f3e5f5;
+            color: #7b1fa2;
+        }
+        .role-user {
+            background-color: #e8f5e9;
+            color: #388e3c;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <a href="{{ url_for('home') }}">
+    <img src="/static/logo.png" alt="Logo da Empresa" class="logo">
+</a>
+        <h2>Área do Gerente</h2>
+    </header>
+
+    <div class="container">
+        {% for project in projects %}
+        <div class="project-card">
+            <div class="project-header">
+                <h3>{{ project.ProjectCode }}</h3>
+            </div>
+            <div class="project-body">
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <form method="POST" action="{{ url_for('add_project_user') }}" class="d-flex gap-2">
+                            <input type="hidden" name="projectId" value="{{ project.Id }}">
+                            <select name="userId" class="form-select">
+                                <option value="">Selecione um usuário...</option>
+                                {% for user in users %}
+                                    {% if user.Id not in project_teams[project.Id]|map(attribute='Id')|list %}
+                                        <option value="{{ user.Id }}">{{ user.Username }} ({{ user.Role }})</option>
+                                    {% endif %}
+                                {% endfor %}
+                            </select>
+                            <button type="submit" class="btn btn-primary">Adicionar</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="team-members">
+                    {% for member in project_teams[project.Id] %}
+                    <div class="team-member">
+                        <div class="member-info">
+                            <span>{{ member.Username }}</span>
+                            <span class="role-badge role-{{ member.Role }}">{{ member.Role }}</span>
+                        </div>
+                        {% if member.Id != current_user.id %}
+                        <form method="POST" action="{{ url_for('remove_project_user') }}" style="display: inline;">
+                            <input type="hidden" name="projectId" value="{{ project.Id }}">
+                            <input type="hidden" name="userId" value="{{ member.Id }}">
+                            <button type="submit" class="btn btn-danger btn-sm" 
+                                    onclick="return confirm('Tem certeza que deseja remover este usuário do projeto?')">
+                                Remover
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="alert alert-info">
+            Você não é gerente de nenhum projeto.
+        </div>
+        {% endfor %}
+    </div>
+
+    <footer class="footer">
+        PFC - Guilherme Avelar - Engenharia de Controle e Automação - UFMG
+    </footer>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

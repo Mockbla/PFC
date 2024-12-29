@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todas as Emissões - GED</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f9;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .header {
+            background-color: #ffffff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo {
+            height: 40px;
+            margin-right: 20px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 40px auto;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            flex-grow: 1;
+        }
+        .footer {
+            background-color: rgba(0, 0, 0, 0.1);
+            padding: 10px 20px;
+            text-align: center;
+            font-size: 14px;
+            color: #333;
+        }
+        .timestamp {
+            white-space: nowrap;
+        }
+        .status-cell {
+            min-width: 140px;
+        }
+        .document-info {
+            min-width: 180px;
+        }
+        .text-pending {
+            color: #dc3545;
+        }
+        .text-completed {
+            color: #198754;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <a href="{{ url_for('home') }}">
+    <img src="/static/logo.png" alt="Logo da Empresa" class="logo">
+</a>
+        <h2>Todas as Emissões</h2>
+    </header>
+
+    <div class="container">
+        <div class="table-responsive">
+            <table id="issuesTable" class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Projeto</th>
+                        <th>Documento</th>
+                        <th>Revisão</th>
+                        <th>Título</th>
+                        <th>Postado por</th>
+                        <th>Data de Emissão</th>
+                        <th>Transmittal</th>
+                        <th>Data do Transmittal</th>
+                        <th>Retorno</th>
+                        <th>Data do Retorno</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for issue in issues %}
+                    <tr>
+                        <td class="document-info">{{ issue.ProjectCode }}</td>
+                        <td class="document-info">{{ issue.DocumentCode }}</td>
+                        <td>{{ issue.rev }}</td>
+                        <td>{{ issue.title }}</td>
+                        <td>{{ issue.postedBy }}</td>
+                        <td class="timestamp">{{ issue.issuedTimestamp.strftime('%d/%m/%Y %H:%M') }}</td>
+                        <td class="status-cell">
+                            {% if issue.TransmittalCode %}
+                                <span class="text-completed">{{ issue.TransmittalCode }}</span>
+                            {% else %}
+                                <span class="text-pending">Pendente</span>
+                            {% endif %}
+                        </td>
+                        <td class="timestamp">
+                            {% if issue.TransmittalTimestamp %}
+                                {{ issue.TransmittalTimestamp.strftime('%d/%m/%Y %H:%M') }}
+                            {% endif %}
+                        </td>
+                        <td class="status-cell">
+                            {% if issue.ReturnCode %}
+                                <span class="text-completed">{{ issue.ReturnCode }}</span>
+                            {% else %}
+                                <span class="text-pending">Pendente</span>
+                            {% endif %}
+                        </td>
+                        <td class="timestamp">
+                            {% if issue.ReturnTimestamp %}
+                                {{ issue.ReturnTimestamp.strftime('%d/%m/%Y %H:%M') }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <footer class="footer">
+        PFC - Guilherme Avelar - Engenharia de Controle e Automação - UFMG
+    </footer>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('#issuesTable').DataTable({
+                order: [[5, 'desc']],
+                language: {
+                    url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/pt-BR.json'
+                },
+                pageLength: 25
+            });
+        });
+    </script>
+</body>
+</html>
